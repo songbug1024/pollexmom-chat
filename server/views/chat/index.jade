@@ -1,0 +1,40 @@
+extends ../layouts/base
+
+block metas
+  meta(name="Author" content="北京凡度网络")
+  meta(name="keywords" content="拇指妈妈,圣元优博")
+  meta(name="Description" content="圣元国际拇指妈妈微信群聊系统")
+  meta(name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+
+block title
+  title 拇指妈妈微信群聊系统
+
+block stylesheets
+  link(rel="stylesheet" type="text/css" href="/css/ionic.min.css")
+  link(rel="stylesheet" type="text/css" href="/css/style.css")
+
+block scripts
+  #wechat-data(data-value="#{weChatData ? JSON.stringify(weChatData) : ''}")
+  #route-data(data-value="#{initRoute || ''}")
+
+  script#init-data-script.
+    (function () {
+      var weChatDataValue = getValueById('wechat-data');
+      var routeValue = getValueById('route-data');
+
+      window.userWeChatData = weChatDataValue ? JSON.parse(weChatDataValue) : null;
+      window.initRoute = routeValue || '';
+      document.querySelector('#init-data-script').remove();
+
+      function getValueById(id) {
+        var el = document.querySelector('#' + id);
+        var value = el.attributes['data-value'].value;
+        el.remove();
+
+        console.log('Fn getValueById: id is ' + id + ', value is ' + value);
+        return value;
+      }
+    })();
+  script(type="text/javascript" src="/socket.io/socket.io.js")
+  script(type="text/javascript" src="/js/dist/bundle.js")
+  script(type="text/javascript" src="/js/libs/ionic/1.0.0/ionic.min.js")

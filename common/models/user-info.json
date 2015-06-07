@@ -1,0 +1,66 @@
+{
+  "name": "UserInfo",
+  "plural": "user-info",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_user_info"
+    },
+    "oracle": {
+      "schema": "S_POLLEXMOM",
+      "table": "T_USER_INFO"
+    }
+  },
+  "properties": {
+    "gender": {
+      "type": "boolean",
+      "oracle": {
+        "columnName": "USER_INFO_GENDER"
+      }
+    },
+    "age": {
+      "type": "number",
+      "oracle": {
+        "columnName": "USER_INFO_AGE"
+      }
+    },
+    "birthday": {
+      "type": "date",
+      "oracle": {
+        "columnName": "USER_INFO_BIRTHDAY"
+      }
+    },
+    "IDCardNumber": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_INFO_IDCard_Number"
+      }
+    },
+    "bloodType": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_INFO_BLOOD_TYPE"
+      }
+    },
+    "created": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": []
+}

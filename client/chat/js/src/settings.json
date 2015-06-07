@@ -1,0 +1,26 @@
+{
+  "apiRoot": "http://192.168.0.108:3000/api/",
+  "socketIORoot": "http://192.168.0.108:3000/",
+  "ioVerifyTimeout": 200,
+  "env": "debug",
+  "locals": {
+    "weChatUserData": "pollexmom_chat_weChatUserData"
+  },
+  "roles": {
+    "member": "member",
+    "adviser": "adviser",
+    "dietitian": "dietitian"
+  },
+  "pageSize": 20,
+  "defaults": {
+  },
+  "contentTypes": {
+    "text": "text",
+    "picture": "picture",
+    "voice": "voice"
+  },
+  "messageTypes": {
+    "public": "public",
+    "private": "private"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "name": "user",
+  "plural": "users",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_users"
+    },
+    "oracle": {
+      "schema": "S_POLLEXMOM",
+      "table": "T_USER"
+    }
+  },
+  "properties": {
+    "userNumber": {
+      "type": "string",
+      "index": {"unique": true},
+      "oracle": {
+        "columnName": "USER_NUMBER"
+      }
+    },
+    "weChatId": {
+      "type": "string",
+      "index": {"unique": true}
+    },
+    "username": {
+      "type": "string",
+      "index": {"unique": true},
+      "oracle": {
+        "columnName": "USER_NAME"
+      }
+    },
+    "password": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_PASSWORD"
+      }
+    },
+    "email": {
+      "type": "string",
+      "index": {"unique": true},
+      "oracle": {
+        "columnName": "USER_EMAIL"
+      }
+    },
+    "tel": {
+      "type": "string",
+      "index": {"unique": true},
+      "oracle": {
+        "columnName": "USER_TEL"
+      }
+    },
+    "roleName": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_AVATAR"
+      }
+    },
+    "desc": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_DESC"
+      }
+    },
+    "totalScore": {
+      "type": "number"
+    },
+    "refereeTel": {
+      "type": "string"
+    },
+    "status": {
+      "type": "number",
+      "default": 1,
+      "oracle": {
+        "columnName": "USER_STATUS"
+      }
+    },
+    "created": {
+      "type": "date",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "createdBy": {
+      "type": "string",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED_BY"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    },
+    "modifiedBy": {
+      "type": "string",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED_BY"
+      }
+    }
+  },
+  "hidden": ["password"],
+  "validations": [],
+  "relations": {
+    "personalInfo": {
+      "type": "hasOne",
+      "model": "UserInfo",
+      "foreignKey": "userId"
+    },
+    "settings": {
+      "type": "hasOne",
+      "model": "UserSettings",
+      "foreignKey": "userId"
+    },
+    "groups": {
+      "type": "hasMany",
+      "model": "ChatGroup",
+      "foreignKey": "memberId",
+      "through": "ChatGroupMember"
+    },
+    "groupMembers": {
+      "type": "hasMany",
+      "model": "ChatGroupMember",
+      "foreignKey": "userId"
+    },
+    "sentMessages": {
+      "type": "hasMany",
+      "model": "ChatMessage",
+      "foreignKey": "senderUserId"
+    },
+    "receivedMessages": {
+      "type": "hasMany",
+      "model": "ChatMessage",
+      "foreignKey": "receiverUserId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "ALLOW"
+    }
+  ],
+  "methods": [],
+  "indexes": {}
+}

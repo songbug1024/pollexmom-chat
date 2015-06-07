@@ -1,0 +1,61 @@
+{
+  "name": "ChatGroup",
+  "plural": "chat-groups",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_chat_groups"
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "string"
+    },
+    "desc": {
+      "type": "string"
+    },
+    "memberNum": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "number",
+      "default": 1
+    },
+    "created": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {
+    "members": {
+      "type": "hasMany",
+      "model": "user",
+      "foreignKey": "groupId",
+      "through": "ChatGroupMember"
+    },
+    "messages": {
+      "type": "hasMany",
+      "model": "ChatMessage",
+      "foreignKey": "groupId"
+    }
+  },
+  "acls": [],
+  "methods": []
+}

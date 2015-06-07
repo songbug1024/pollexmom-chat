@@ -1,0 +1,75 @@
+{
+  "name": "ChatMessage",
+  "plural": "chat-messages",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_chat_messages"
+    }
+  },
+  "properties": {
+    "displayName": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    },
+    "messageType": {
+      "type": "string"
+    },
+    "roleName": {
+      "type": "string"
+    },
+    "status": {
+      "type": "number",
+      "default": 1
+    },
+    "created": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {
+    "group": {
+      "type": "belongsTo",
+      "model": "ChatGroup"
+    },
+    "sender": {
+      "type": "belongsTo",
+      "model": "ChatGroupMember"
+    },
+    "senderUser": {
+      "type": "belongsTo",
+      "model": "user"
+    },
+    "receiver": {
+      "type": "belongsTo",
+      "model": "ChatGroupMember"
+    },
+    "receiverUser": {
+      "type": "belongsTo",
+      "model": "user"
+    }
+  },
+  "acls": [],
+  "methods": []
+}

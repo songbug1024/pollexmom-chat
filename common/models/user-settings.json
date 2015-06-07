@@ -1,0 +1,40 @@
+{
+  "name": "UserSettings",
+  "plural": "user-settings",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_user_settings"
+    }
+  },
+  "properties": {
+    "groupListSortBy": {
+      "type": "string"
+    },
+    "historyMsgStoringDays": {
+      "type": "number"
+    },
+    "privateHistoryMsgStoringDays": {
+      "type": "number"
+    },
+    "created": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": []
+}

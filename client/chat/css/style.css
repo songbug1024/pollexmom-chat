@@ -1,0 +1,72 @@
+.bar-header .mall-link,
+.bar-header .show-group-members {
+    width: 33px;
+    height: 33px;
+    font-size: 24px!important;
+    line-height: 33px;
+}
+.chat-input-bar .add-more {
+    font-size: 33px!important;
+}
+.chat-input-bar .add-phiz {
+    font-size: 32px!important;
+}
+.chat-input-bar .send-msg-btn {
+    width: 54px;
+}
+.chat-input-bar .msg-input-label {
+    position: absolute;
+    left: 76px;
+    right: 69px;
+    height: 34px;
+    padding-left: 10px;
+    border-radius: 2px;
+}
+.chat-input-bar .msg-input-label input {
+    padding-right: 10px;
+}
+.msg-content .messages {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+.msg-content .messages li {
+    display: block;
+    float: left;
+    clear: both;
+    margin: 0 0 1rem 5px;
+    padding: 0;
+    max-width: 65%;
+}
+.msg-content .messages li.mine {
+    float: right;
+    margin-left: 0;
+    margin-right: 5px;
+}
+.msg-content .messages .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 90%;
+    margin-right: 5px;
+}
+.msg-content .messages .avatar,
+.msg-content .messages .info {
+    display: inline-block;
+}
+.msg-content .messages .username {
+    margin-bottom: 2px;
+    color: #9E9898;
+    font-size: .5rem;
+}
+.msg-content .messages .content {
+    margin: 0;
+    padding: .6875rem;
+    border-radius: .75rem;
+    background: #e6e5eb;
+    color: #383641;
+    font-size: .875rem;
+}
+.msg-content .messages li.mine .content {
+    background: #158ffe;
+    color: #fff;
+}

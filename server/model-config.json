@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ]
+  },
+  "ACL": {
+    "dataSource": "db",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "db",
+    "public": false
+  },
+  "Role": {
+    "dataSource": "db",
+    "public": false
+  },
+  "user": {
+    "dataSource": "mongodb",
+    "public": true
+  },
+  "UserInfo": {
+    "dataSource": "mongodb",
+    "public": true
+  },
+  "UserSettings": {
+    "dataSource": "mongodb",
+    "public": true
+  },
+  "ChatGroup": {
+    "dataSource": "mongodb",
+    "public": true
+  },
+  "ChatGroupMember": {
+    "dataSource": "mongodb",
+    "public": true
+  },
+  "ChatMessage": {
+    "dataSource": "mongodb",
+    "public": true
+  }
+}

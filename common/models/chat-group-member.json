@@ -1,0 +1,70 @@
+{
+  "name": "ChatGroupMember",
+  "plural": "chat-group-members",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true,
+    "mongodb": {
+      "collection": "c_chat_group_members"
+    }
+  },
+  "properties": {
+    "isMaster": {
+      "type": "boolean"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "desc": {
+      "type": "string"
+    },
+    "status": {
+      "type": "number",
+      "default": 1
+    },
+    "roleName": {
+      "type": "string"
+    },
+    "created": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "CREATED"
+      }
+    },
+    "modified": {
+      "type": "date",
+      "defaultFn": "now",
+      "oracle": {
+        "columnName": "MODIFIED"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {
+    "user": {
+      "type": "belongsTo",
+      "model": "user"
+    },
+    "group": {
+      "type": "belongsTo",
+      "model": "ChatGroup"
+    },
+    "sentMessages": {
+      "type": "hasMany",
+      "model": "ChatMessage",
+      "foreignKey": "senderId"
+    },
+    "receivedMessages": {
+      "type": "hasMany",
+      "model": "ChatMessage",
+      "foreignKey": "receiverId"
+    }
+  },
+  "acls": [],
+  "methods": []
+}
