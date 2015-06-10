@@ -1,4 +1,5 @@
 {
+  "weChatMainUrl": "http://192.168.0.108:3000/",
   "apiRoot": "http://192.168.0.108:3000/api/",
   "socketIORoot": "http://192.168.0.108:3000/",
   "ioVerifyTimeout": 200,

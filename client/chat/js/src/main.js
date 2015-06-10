@@ -18,6 +18,7 @@ RestMVC.config({
 
 var sessionStorage = RestMVC.plugin('storage').sessionStorage;
 var initWeChatUserPlugin = require('./plugins/init-wechat-user');
+var socketPlugin = require('./plugins/socket');
 var App = require('./app');
 
 (function verifyIO() {
@@ -53,14 +54,14 @@ function initUserData() {
 
 function startClient(err, user) {
   if (err || !user || !user.id) {
-    return alert('初始化用户信息失败');
+    // 打开方式不对
+
+    alert('初始化用户信息失败');
+    window.location.href = RestMVC.Settings.weChatMainUrl;
+    return;
   }
 
-  var socket = io.connect(RestMVC.Settings.socketIORoot);
-
-  socket.emit('join', {userId: user.id, groupId: user.groupId});
-
-  socket.on('ready', function (data) {
+  socketPlugin(user, function (socket, data) {
     data = data || {};
 
     if (RestMVC.Settings.env === 'debug') {
