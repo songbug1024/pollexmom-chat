@@ -19,7 +19,7 @@ Socket.disconnect = function (data) {
   clientSize--;
 }
 
-Socket.join = function (data) {
+Socket.join = function (data, callback) {
   var socket = this;
   console.log('Socket send join request, data is ' + data);
 

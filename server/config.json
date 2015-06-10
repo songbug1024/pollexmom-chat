@@ -32,5 +32,8 @@
     "member": "member",
     "adviser": "adviser",
     "dietitian": "dietitian"
+  },
+  "async": {
+    "parallelLimit": 8
   }
 }
