@@ -6,6 +6,8 @@
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var async = require('async');
+var localStorage = RestMVC.plugin('storage').localStorage;
+
 var IndexPageView = require('../views/index-page');
 var ChatGroupModel = require('../models/chat-group');
 var ChatGroupMemberModel = require('../models/chat-group-member');
@@ -14,9 +16,6 @@ var ChatMessageModel = require('../models/chat-message');
 
 module.exports = {
   index: function () {
-//    this.socket.on('member joined', function (user) {
-//      alert('用户上线' + user.username);
-//    });
     var user = this.user;
     var groupId = user.groupId;
     var userId = user.id;
@@ -58,11 +57,15 @@ module.exports = {
       if (err) {
         return indexPageView.error(err);
       }
+      localStorage.setJSON(RestMVC.Settings.locals.userGroupInfo, results[0].toJSON());
 
       user.memberInfo = results[2].attributes;
       indexPageView.render(results);
     })
 
+    this.socket.on('member joined', function (user) {
+      indexPageView.trigger('memberJoined', user);
+    });
     return indexPageView;
   },
   sendMsg: function (msg, callback) {

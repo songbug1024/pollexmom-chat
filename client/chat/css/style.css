@@ -5,6 +5,36 @@
     font-size: 24px!important;
     line-height: 33px;
 }
+.notice-dot {
+    position: absolute;
+    top: 8px;
+    right: 0;
+    border-radius: 90%;
+    width: 6px;
+    height: 6px;
+    display: none;
+}
+.notice-dot.active {
+    display: block;
+}
+.connection-modal {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, .4);
+    z-index: 10000;
+}
+.connection-modal .connection-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 36px;
+    margin-top: -18px;
+    margin-left: -250px;
+    text-align: center;
+}
 .chat-input-bar .add-more {
     font-size: 33px!important;
 }
@@ -34,24 +64,42 @@
     display: block;
     float: left;
     clear: both;
-    margin: 0 0 1rem 5px;
+    margin: 0 0 10px;
     padding: 0;
-    max-width: 65%;
+    max-width: 80%;
+}
+.msg-content .messages li:first-child {
+    margin-top: 5px;
+}
+.msg-content .messages li:last-child {
+    margin-bottom: 5px;
 }
 .msg-content .messages li.mine {
     float: right;
-    margin-left: 0;
-    margin-right: 5px;
+}
+.msg-content .messages .avatar,
+.msg-content .messages .info {
+    float: left;
+}
+.msg-content .messages .mine .avatar,
+.msg-content .messages .mine .info {
+    float: right;
 }
 .msg-content .messages .avatar {
     width: 40px;
     height: 40px;
-    border-radius: 90%;
+    margin-left: 10px;
     margin-right: 5px;
+    border-radius: 90%;
 }
-.msg-content .messages .avatar,
+.msg-content .messages .mine .avatar {
+    margin-left: 0;
+}
 .msg-content .messages .info {
-    display: inline-block;
+    max-width: 80%;
+}
+.msg-content .messages .mine .info {
+    margin-right: 10px;
 }
 .msg-content .messages .username {
     margin-bottom: 2px;
@@ -59,7 +107,6 @@
     font-size: .5rem;
 }
 .msg-content .messages .content {
-    margin: 0;
     padding: .6875rem;
     border-radius: .75rem;
     background: #e6e5eb;
@@ -69,4 +116,37 @@
 .msg-content .messages li.mine .content {
     background: #158ffe;
     color: #fff;
+}
+.counter {
+    position: relative;
+    display: inline-block;
+    height: 16px;
+    min-width: 16px;
+    top: -8px;
+    margin-left: 5px;
+    border-radius: 8px;
+    text-align: center;
+    line-height: 16px;
+    font-size: 10px;
+}
+.sort-selections {
+    position: absolute;
+    top: 44px;
+    right: 0;
+    display: none;
+}
+.sort-selections.show {
+    display: block;
+}
+.sort-selections .item .icon {
+    display: none;
+}
+.sort-selections .item.current .icon {
+    display: inline-block;
+}
+.sort-selections .item.current[data-order='desc'] .asc {
+    display: none;
+}
+.sort-selections .item.current[data-order='asc'] .desc {
+    display: none;
 }

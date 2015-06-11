@@ -22,6 +22,7 @@ RestMVC.config({
 
 var sessionStorage = RestMVC.plugin('storage').sessionStorage;
 var initWeChatUserPlugin = require('./plugins/init-wechat-user');
+var socketPlugin = require('./plugins/socket');
 var App = require('./app');
 
 (function verifyIO() {
@@ -57,14 +58,14 @@ function initUserData() {
 
 function startClient(err, user) {
   if (err || !user || !user.id) {
-    return alert('初始化用户信息失败');
+    // 打开方式不对
+
+    alert('初始化用户信息失败');
+    window.location.href = RestMVC.Settings.weChatMainUrl;
+    return;
   }
 
-  var socket = io.connect(RestMVC.Settings.socketIORoot);
-
-  socket.emit('join', {userId: user.id, groupId: user.groupId});
-
-  socket.on('ready', function (data) {
+  socketPlugin(user, function (socket, data) {
     data = data || {};
 
     if (RestMVC.Settings.env === 'debug') {
@@ -97,7 +98,8 @@ function socketClientReady(socket, user) {
   var route = window.initRoute || app.main;
   app.navigate(route, {trigger: true, replace: true});
 }
-},{"./app":2,"./plugins/init-wechat-user":11,"./settings.json":12,"rest-mvc":24,"underscore":41}],2:[function(require,module,exports){
+
+},{"./app":2,"./plugins/init-wechat-user":12,"./plugins/socket":13,"./settings.json":14,"rest-mvc":31,"underscore":48}],2:[function(require,module,exports){
 /**
  * @Description: Index Route
  * @Author: fuwensong
@@ -118,7 +120,51 @@ module.exports = RestMVC.Router.extend({
     'group-members': 'groupMembers.index'
   }
 });
-},{"./controllers/group-members":4,"./controllers/index":5,"rest-mvc":24}],3:[function(require,module,exports){
+},{"./controllers/group-members":5,"./controllers/index":6,"rest-mvc":31}],3:[function(require,module,exports){
+/**
+ * @Description:
+ * @Author: fuwensong
+ * @Date: 2015/5/9
+ */
+var RestMVC = require('rest-mvc');
+var Model = require('../models/chat-group-member');
+
+module.exports = RestMVC.Collection.extend({
+  name: 'ChatGroupMember',
+  plural: 'chat-group-members',
+  model: Model,
+  comparator: 'id',
+  mastersUrl: function () {
+    var groupId = this.groupId;
+    if (!groupId) {
+      return console.error('Collection \'' + this.name + '\' groupPublicRecordUrl groupId is invalid.');
+    }
+
+    var queryString = this.qWhere({status: 1, groupId: groupId, roleName: RestMVC.Settings.roles.dietitian})
+      .qOrder({displayName: 'DESC'})
+      .qEnd();
+
+    return this.urlRoot() + '?' + queryString;
+  },
+  membersUrl: function (sinceId) {
+    var groupId = this.groupId;
+    if (!groupId) {
+      return console.error('Collection \'' + this.name + '\' groupPublicRecordUrl groupId is invalid.');
+    }
+
+    this.qWhere({status: 1, groupId: groupId, roleName: RestMVC.Settings.roles.member});
+    if (sinceId) {
+      this.qWhere({id: {lt: sinceId}});
+    }
+
+    var queryString = this.qLimit(RestMVC.Settings.pageSize)
+      .qOrder({displayName: 'DESC'})
+      .qEnd();
+
+    return this.urlRoot() + '?' + queryString;
+  }
+});
+},{"../models/chat-group-member":7,"rest-mvc":31}],4:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -150,7 +196,7 @@ module.exports = RestMVC.Collection.extend({
     return this.urlRoot() + '?' + queryString;
   }
 });
-},{"../models/chat-message":8,"rest-mvc":24}],4:[function(require,module,exports){
+},{"../models/chat-message":9,"rest-mvc":31}],5:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -159,16 +205,56 @@ module.exports = RestMVC.Collection.extend({
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var async = require('async');
+var localStorage = RestMVC.plugin('storage').localStorage;
+
 var GroupMembersPageView = require('../views/group-members-page');
+var GroupMemberCollection = require('../collections/chat-group-member');
 
 module.exports = {
   index: function () {
+    var groupId = this.user.groupId;
     var groupMembersPageView = new GroupMembersPageView();
+    var groupInfo = localStorage.getJSON(RestMVC.Settings.locals.userGroupInfo);
 
+    if (groupInfo) {
+      groupMembersPageView.frameData.groupName = groupInfo.name;
+    }
+
+    async.parallel([
+      function loadMasters(callback) {
+        var masterCollection = new GroupMemberCollection();
+        masterCollection.groupId = groupId;
+        masterCollection.url = masterCollection.mastersUrl();
+
+        masterCollection.fetch(function (err) {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, this);
+        });
+      },
+      function loadMembers(callback) {
+        var memberCollection = new GroupMemberCollection();
+        memberCollection.groupId = groupId;
+        memberCollection.url = memberCollection.membersUrl();
+
+        memberCollection.fetch(function (err) {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, this);
+        });
+      }
+    ], function (err, results) {
+      if (err) {
+        return groupMembersPageView.error(err);
+      }
+      groupMembersPageView.render({masters: results[0], members: results[1]});
+    })
     return groupMembersPageView;
   }
 };
-},{"../views/group-members-page":16,"async":21,"rest-mvc":24,"underscore":41}],5:[function(require,module,exports){
+},{"../collections/chat-group-member":3,"../views/group-members-page":23,"async":28,"rest-mvc":31,"underscore":48}],6:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -177,6 +263,8 @@ module.exports = {
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var async = require('async');
+var localStorage = RestMVC.plugin('storage').localStorage;
+
 var IndexPageView = require('../views/index-page');
 var ChatGroupModel = require('../models/chat-group');
 var ChatGroupMemberModel = require('../models/chat-group-member');
@@ -185,9 +273,6 @@ var ChatMessageModel = require('../models/chat-message');
 
 module.exports = {
   index: function () {
-//    this.socket.on('member joined', function (user) {
-//      alert('用户上线' + user.username);
-//    });
     var user = this.user;
     var groupId = user.groupId;
     var userId = user.id;
@@ -229,11 +314,15 @@ module.exports = {
       if (err) {
         return indexPageView.error(err);
       }
+      localStorage.setJSON(RestMVC.Settings.locals.userGroupInfo, results[0].toJSON());
 
       user.memberInfo = results[2].attributes;
       indexPageView.render(results);
     })
 
+    this.socket.on('member joined', function (user) {
+      indexPageView.trigger('memberJoined', user);
+    });
     return indexPageView;
   },
   sendMsg: function (msg, callback) {
@@ -249,7 +338,7 @@ module.exports = {
     socket.emit('public msg', msg, callback);
   }
 };
-},{"../collections/chat-message":3,"../models/chat-group":7,"../models/chat-group-member":6,"../models/chat-message":8,"../views/index-page":20,"async":21,"rest-mvc":24,"underscore":41}],6:[function(require,module,exports){
+},{"../collections/chat-message":4,"../models/chat-group":8,"../models/chat-group-member":7,"../models/chat-message":9,"../views/index-page":27,"async":28,"rest-mvc":31,"underscore":48}],7:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -272,7 +361,7 @@ module.exports = RestMVC.Model.extend({
     return this.urlRoot() + '/findOne?' + queryString;
   }
 });
-},{"rest-mvc":24,"underscore":41}],7:[function(require,module,exports){
+},{"rest-mvc":31,"underscore":48}],8:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -285,7 +374,7 @@ module.exports = RestMVC.Model.extend({
   name: 'ChatGroup',
   plural: 'chat-groups'
 });
-},{"rest-mvc":24,"underscore":41}],8:[function(require,module,exports){
+},{"rest-mvc":31,"underscore":48}],9:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -301,7 +390,7 @@ module.exports = RestMVC.Model.extend({
 
   }
 });
-},{"rest-mvc":24,"underscore":41}],9:[function(require,module,exports){
+},{"rest-mvc":31,"underscore":48}],10:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -314,7 +403,7 @@ module.exports = RestMVC.Model.extend({
   name: 'UserPersonalInfo',
   plural: 'user-info'
 });
-},{"rest-mvc":24,"underscore":41}],10:[function(require,module,exports){
+},{"rest-mvc":31,"underscore":48}],11:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -342,7 +431,7 @@ module.exports = RestMVC.Model.extend({
     return this.urlRoot() + '/findOne?' + queryString;
   }
 });
-},{"rest-mvc":24,"underscore":41}],11:[function(require,module,exports){
+},{"rest-mvc":31,"underscore":48}],12:[function(require,module,exports){
 /**
  * Created by fuwensong on 15-5-13.
  */
@@ -424,14 +513,116 @@ module.exports = function (weChatData, callback) {
   });
 };
 
-},{"../models/user":10,"../models/user-personal-info":9,"async":21,"rest-mvc":24}],12:[function(require,module,exports){
+},{"../models/user":11,"../models/user-personal-info":10,"async":28,"rest-mvc":31}],13:[function(require,module,exports){
+/**
+ * Created by fuwensong on 15-6-10.
+ */
+var RestMVC = require('rest-mvc');
+var $ = require('jquery');
+var ConnectionModalView = require('../views/connection-modal');
+var isReconnect = false;
+
+module.exports = function (user, readyCallback) {
+  var socket = io(RestMVC.Settings.socketIORoot, RestMVC.Settings.socketIOOptions);
+  var connectionModal = new ConnectionModalView();
+
+  $('body').append(connectionModal.frame().el);
+  connectionModal.show();
+  
+  socket.on('connect', function () {
+    if (!isReconnect) {
+      connectionModal.show('已连接服务器，登录中...');
+
+      if (RestMVC.Settings.env === 'debug') {
+        console.log('Socket on connect');
+      }
+
+      socket.emit('join', {userId: user.id, groupId: user.groupId}, function (err, data) {
+        if (err) {
+          connectionModal.show('登录失败，请尝试刷新页面！');
+          return console.error(err);
+        }
+        connectionModal.show('登录成功！');
+
+        delayHideModal();
+
+        readyCallback(socket, data);
+      });
+    }
+  });
+
+  socket.on('error', function (err) {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on error, err is' + err);
+    }
+  });
+
+  socket.on('disconnect', function () {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on disconnect');
+    }
+  });
+
+  socket.on('reconnect', function (attempt) {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on reconnect, attempt is ' + attempt);
+    }
+
+    isReconnect = true;
+    connectionModal.show('重连服务器成功！');
+    delayHideModal();
+
+    // TODO refresh messages
+  });
+
+  socket.on('reconnect_attempt', function () {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on reconnect_attempt');
+    }
+  });
+
+  socket.on('reconnecting', function (attempt) {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on reconnecting, attempt is ' + attempt);
+    }
+
+    connectionModal.show('网络不给力，第' + attempt + '次重连中...');
+  });
+
+  socket.on('reconnect_error', function (err) {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on reconnect_error, err is ' + err);
+    }
+  });
+
+  socket.on('reconnect_failed', function (err) {
+    if (RestMVC.Settings.env === 'debug') {
+      console.log('Socket on reconnect_failed');
+    }
+
+    connectionModal.show('无法连接服务器...');
+  });
+
+  function delayHideModal () {
+    setTimeout(function () {
+      connectionModal.hide();
+    }, RestMVC.Settings.enterChatRoomTimeout);
+  }
+}
+},{"../views/connection-modal":20,"jquery":30,"rest-mvc":31}],14:[function(require,module,exports){
 module.exports={
+  "weChatMainUrl": "http://192.168.0.108:3000/",
   "apiRoot": "http://192.168.0.108:3000/api/",
   "socketIORoot": "http://192.168.0.108:3000/",
+  "socketIOOptions": {
+    "reconnectionAttempts": 5
+  },
   "ioVerifyTimeout": 200,
+  "enterChatRoomTimeout": 1500,
   "env": "debug",
   "locals": {
-    "weChatUserData": "pollexmom_chat_weChatUserData"
+    "weChatUserData": "pollexmom_chat_weChatUserData",
+    "userGroupInfo": "pollexmom_userGroupInfo"
   },
   "roles": {
     "member": "member",
@@ -451,16 +642,23 @@ module.exports={
     "private": "private"
   }
 }
-},{}],13:[function(require,module,exports){
-module.exports = "<img class=\"avatar\" src=\"{{=avatar}}\">\r\n<div class=\"info\">\r\n  <p class=\"username\">{{=displayName}}</p>\r\n  <p class=\"content\">{{=content}}</p>\r\n</div>";
-
-},{}],14:[function(require,module,exports){
-module.exports = "<div class=\"bar bar-header bar-positive\">\r\n  <a href=\"#\"><button class=\"mall-link button button-clear button-light ion-ios-cart-outline\"></button></a>\r\n  <h1 class=\"group-name title\">{{=groupName}}</h1>\r\n  <button class=\"show-group-members button button-clear button-light pull-right ion-ios-people-outline\"></button>\r\n</div>\r\n<div class=\"msg-content scroll-content ionic-scroll has-header has-footer\">\r\n  <div class=\"scroll\">\r\n    <ul class=\"messages\">\r\n    </ul>\r\n  </div>\r\n</div>";
 
 },{}],15:[function(require,module,exports){
-module.exports = "<div class=\"bar bar-header bar-positive\">\r\n  <a href=\"#\"><button class=\"mall-link button button-clear button-light ion-ios-cart-outline\"></button></a>\r\n  <h1 class=\"group-name title\">{{=groupName}}</h1>\r\n  <button class=\"show-group-members button button-clear button-light pull-right ion-ios-people-outline\"></button>\r\n</div>\r\n<div class=\"msg-content scroll-content ionic-scroll has-header has-footer\">\r\n  <div class=\"scroll\">\r\n    <ul class=\"messages\">\r\n    </ul>\r\n  </div>\r\n</div>\r\n<div class=\"chat-input-bar bar bar-footer bar-stable\">\r\n  <button class=\"add-phiz button button-clear button-dark ion-happy-outline\"></button>\r\n  <button class=\"add-more button button-clear button-dark ion-ios-plus-outline\"></button>\r\n  <label class=\"msg-input-label item item-input\">\r\n    <input class=\"msg-input\" type=\"text\" placeholder=\"说两句...\">\r\n  </label>\r\n  <button class=\"send-msg-btn button button-positive pull-right\">发送</button>\r\n</div>\r\n";
+module.exports = "{{\r\n  if (isMine) {\r\n}}\r\n<div class=\"info\">\r\n  <p class=\"username\">{{=displayName}}</p>\r\n  <p class=\"content\">{{=content}}</p>\r\n</div>\r\n<img class=\"avatar\" src=\"{{=avatar}}\">\r\n{{\r\n  } else {\r\n}}\r\n<img class=\"avatar\" src=\"{{=avatar}}\">\r\n<div class=\"info\">\r\n  <p class=\"username\">{{=displayName}}</p>\r\n  <p class=\"content\">{{=content}}</p>\r\n</div>\r\n{{\r\n  }\r\n}}\r\n\r\n";
 
 },{}],16:[function(require,module,exports){
+module.exports = "<h2 class=\"connection-text stable\">{{=connectionText}}</h2>";
+
+},{}],17:[function(require,module,exports){
+module.exports = "<div class=\"bar bar-header bar-positive\">\r\n  <a class=\"back-btn button icon-left ion-ios-arrow-left button-clear button-light\"></a>\r\n  <h1 class=\"group-name title\">{{=groupName}}</h1>\r\n  <button class=\"sort-btn button button-icon icon ion-ios-keypad-outline\"></button>\r\n</div>\r\n<div class=\"sort-selections\">\r\n  <ul class=\"list\">\r\n    <a class=\"item current\" data-orderby=\"displayName\" data-order=\"desc\">\r\n      名称\r\n      <i class=\"asc icon ion-ios-arrow-up\"></i>\r\n      <i class=\"desc icon ion-ios-arrow-down\"></i>\r\n    </a>\r\n    <a class=\"item\" data-orderby=\"created\" data-order=\"desc\">\r\n      加入时间\r\n      <i class=\"asc icon ion-ios-arrow-up\"></i>\r\n      <i class=\"desc icon ion-ios-arrow-down\"></i>\r\n    </a>\r\n    <a class=\"item\" data-orderby=\"xxx\" data-order=\"desc\">\r\n      活跃度\r\n      <i class=\"asc icon ion-ios-arrow-up\"></i>\r\n      <i class=\"desc icon ion-ios-arrow-down\"></i></a>\r\n  </ul>\r\n</div>\r\n<div class=\"member-content scroll-content ionic-scroll has-header\">\r\n  <div class=\"scroll\">\r\n    <ul class=\"list\">\r\n      <li class=\"master-divider item item-divider\">营养师<span class=\"counter positive-bg light\"></span></li>\r\n      <li class=\"member-divider item item-divider\">会员<span class=\"counter positive-bg light\"></span></li>\r\n    </ul>\r\n  </div>\r\n</div>";
+
+},{}],18:[function(require,module,exports){
+module.exports = "<div class=\"bar bar-header bar-positive\">\r\n  <a href=\"#\"><button class=\"mall-link button button-clear button-light ion-ios-cart-outline\"></button></a>\r\n  <h1 class=\"group-name title\">{{=groupName}}</h1>\r\n  <button class=\"show-group-members button button-clear button-light pull-right ion-ios-people-outline\"><i class=\"notice-dot assertive-bg\"></i></button>\r\n</div>\r\n<div class=\"msg-content scroll-content ionic-scroll has-header has-footer\">\r\n  <div class=\"scroll\">\r\n    <ul class=\"messages\">\r\n    </ul>\r\n  </div>\r\n</div>\r\n<div class=\"chat-input-bar bar bar-footer bar-stable\">\r\n  <button class=\"add-phiz button button-clear button-dark ion-happy-outline\"></button>\r\n  <button class=\"add-more button button-clear button-dark ion-ios-plus-outline\"></button>\r\n  <label class=\"msg-input-label item item-input\">\r\n    <input class=\"msg-input\" type=\"text\" placeholder=\"说两句...\">\r\n  </label>\r\n  <button class=\"send-msg-btn button button-positive pull-right\">发送</button>\r\n</div>\r\n";
+
+},{}],19:[function(require,module,exports){
+module.exports = "<img src=\"{{=avatar}}\">\r\n<h2>{{=displayName}}</h2>\r\n<p>{{=desc}}</p>\r\n<button class=\"at-btn button button-icon icon ion-ios-at-outline\"></button>";
+
+},{}],20:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -468,9 +666,118 @@ module.exports = "<div class=\"bar bar-header bar-positive\">\r\n  <a href=\"#\"
  */
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
-var template = require('../templates/group-members-page.tpl');
+var template = require('../templates/connection-modal.tpl');
+
+module.exports = RestMVC.View.extend({
+  name: 'ConnectionModal',
+  role: 'modal',
+  template: _.template(template),
+  className: 'connection-modal',
+  parts: {
+    connectionText: '.connection-text'
+  },
+  frameData: {
+    connectionText: '连接中...'
+  },
+  initialize: function () {
+    this.shown = false;
+  },
+  show: function (text) {
+    if (!this.shown) {
+      this.shown = true;
+      this.$el.show();
+    }
+    text && this.renderPart('connectionText', text);
+  },
+  hide: function () {
+    if (this.shown) {
+      this.shown = false;
+      this.$el.hide();
+    }
+  }
+});
+},{"../templates/connection-modal.tpl":16,"rest-mvc":31,"underscore":48}],21:[function(require,module,exports){
+/**
+ * @Description:
+ * @Author: fuwensong
+ * @Date: 2015/6/6
+ */
+var RestMVC = require('rest-mvc');
+var MemberItemView = require('./group-members-page-item');
+
+module.exports = RestMVC.View.extend({
+  name: 'IndexPageContent',
+  role: 'content',
+  parts: {
+    masterCounter: '.master-divider .counter',
+    memberCounter: '.member-divider .counter'
+  },
+  render: function (data) {
+    if (!data) return console.error('View ' + this.name + ': render data is invalid.');
+    var masters = data.masters;
+    var members = data.members;
+
+    var $masterDividerEl = this.$el.find('.master-divider');
+    var $memberDividerEl = this.$el.find('.member-divider');
+
+    masters.each(function (model) {
+      $masterDividerEl.after(new MemberItemView({model: model}).render().el);
+    });
+    members.each(function (model) {
+      $memberDividerEl.after(new MemberItemView({model: model}).render().el);
+    });
+    this.renderParts({
+      masterCounter: masters.length,
+      memberCounter: members.length
+    });
+
+    var scrollView = new ionic.views.Scroll({
+      el: this.el
+    });
+    var max = scrollView.getScrollMax();
+    scrollView.scrollTo(max.left, max.top, false);
+    return this;
+  }
+});
+},{"./group-members-page-item":22,"rest-mvc":31}],22:[function(require,module,exports){
+/**
+ * @Description:
+ * @Author: fuwensong
+ * @Date: 2015/6/6
+ */
+var RestMVC = require('rest-mvc');
+var _ = require('underscore');
+var template = require('../templates/member-item.tpl');
+
+module.exports = RestMVC.View.extend({
+  name: 'GroupMemberPageItem',
+  role: 'list-item',
+  template: _.template(template),
+  tagName: 'li',
+  className: 'item item-avatar item-icon-right',
+  events: {
+  },
+  initialize: function (options) {
+    var isMaster = this.model.get('isMaster');
+    if (isMaster) {
+      this.$el.addClass('master');
+    }
+  },
+  render: function () {
+    return this.frame(this.model.attributes);
+  }
+});
+},{"../templates/member-item.tpl":19,"rest-mvc":31,"underscore":48}],23:[function(require,module,exports){
+/**
+ * @Description:
+ * @Author: fuwensong
+ * @Date: 2015/6/6
+ */
+var RestMVC = require('rest-mvc');
 var $ = require('jquery');
-var ContentView = require('./index-page-content');
+var _ = require('underscore');
+var template = require('../templates/group-members-page.tpl');
+var ContentView = require('./group-members-page-content');
 
 module.exports = RestMVC.View.extend({
   id: 'group-members-page',
@@ -478,36 +785,62 @@ module.exports = RestMVC.View.extend({
   role: 'page',
   template: _.template(template),
   className: 'page view',
-  parts: {
-    groupName: '.group-name'
-  },
   frameData: {
     groupName: '聊天室'
   },
   events: {
-    'swipe .msg-content': 'showGroupMembersBtnEvent'
+    'tap .sort-btn': 'sortBtnEvent',
+    'tap .sort-selections .item': 'sortItemEvent',
+    'tap .back-btn': 'backEvent',
+    'swiperight .member-content': 'backEvent'
   },
   render: function (data) {
     if (!data) return console.error('View ' + this.name + ': render data is invalid.');
+    var group = data.group;
+    group && this.renderPart('groupName', group.name);
 
-    var groupModel = data[0];
-    this.renderPart('groupName', groupModel.get('name'));
-
-    var msgCollection = data[1];
-    var chatBarView = new ChatBarView();
-    var contentView = new ContentView({chatBarView: chatBarView});
-
-    chatBarView.setElement(this.$el.find('.chat-input-bar'));
-    contentView.setElement(this.$el.find('.msg-content'));
-    chatBarView.render();
-    contentView.render({msgCollection: msgCollection});
+    var contentView = new ContentView();
+    contentView.setElement(this.$el.find('.member-content'));
+    contentView.render(data);
     return this;
   },
-  showGroupMembersBtnEvent: function (e) {
+  backEvent: function (e) {
     pollexmomChatApp.back();
+  },
+  sortBtnEvent: function (e) {
+    var $el = $(e.currentTarget);
+    var $sectionsEl = this.$el.find('.sort-selections');
+
+    $el.toggleClass('active');
+    if ($el.hasClass('active')) {
+      $sectionsEl.addClass('show');
+    } else {
+      $sectionsEl.removeClass('show');
+    }
+  },
+  sortItemEvent: function (e) {
+    var $el = $(e.currentTarget);
+    var $sortBtnEl = this.$el.find('.sort-btn');
+    var $sectionsEl = this.$el.find('.sort-selections');
+
+    if ($el.hasClass('current')) {
+      var order = $el.attr('data-order');
+      order = order === 'asc' ? 'desc' : 'asc';
+      $el.attr('data-order', order);
+    } else {
+      var $currentItemEl = $sectionsEl.find('.item.current');
+      $currentItemEl.removeClass('current');
+    }
+    $el.addClass('current');
+    $sectionsEl.removeClass('show');
+    $sortBtnEl.removeClass('active');
+
+    var orderby = $el.attr('data-orderby');
+    var order = $el.attr('data-order');
+    // TODO
   }
 });
-},{"../templates/group-members-page.tpl":14,"./index-page-content":19,"jquery":23,"rest-mvc":24,"underscore":41}],17:[function(require,module,exports){
+},{"../templates/group-members-page.tpl":17,"./group-members-page-content":21,"jquery":30,"rest-mvc":31,"underscore":48}],24:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -564,7 +897,7 @@ module.exports = RestMVC.View.extend({
     });
   }
 });
-},{"../controllers/index":5,"rest-mvc":24,"underscore":41}],18:[function(require,module,exports){
+},{"../controllers/index":6,"rest-mvc":31,"underscore":48}],25:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -591,6 +924,7 @@ module.exports = RestMVC.View.extend({
     var senderUserId = this.model.get('senderUserId');
     var isMine = userId === senderUserId && userMemberId === senderId;
 
+    this.model.set('isMine', isMine);
     if (isMine) {
       this.$el.addClass('mine');
     }
@@ -601,7 +935,7 @@ module.exports = RestMVC.View.extend({
     return this.frame(this.model.attributes);
   }
 });
-},{"../templates/chat-msg.tpl":13,"rest-mvc":24,"underscore":41}],19:[function(require,module,exports){
+},{"../templates/chat-msg.tpl":15,"rest-mvc":31,"underscore":48}],26:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -661,7 +995,7 @@ module.exports = RestMVC.View.extend({
     $msgEl.attr('data-id', msg.id);
   }
 });
-},{"../controllers/index":5,"../models/chat-message":8,"./index-page-chat-msg":18,"rest-mvc":24,"underscore":41}],20:[function(require,module,exports){
+},{"../controllers/index":6,"../models/chat-message":9,"./index-page-chat-msg":25,"rest-mvc":31,"underscore":48}],27:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -670,7 +1004,6 @@ module.exports = RestMVC.View.extend({
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var template = require('../templates/index-page.tpl');
-var $ = require('jquery');
 var ChatBarView = require('./index-page-chat-bar');
 var ContentView = require('./index-page-content');
 
@@ -691,6 +1024,7 @@ module.exports = RestMVC.View.extend({
   },
   initialize: function () {
     // TODO
+    this.on('memberJoined', this.onMemberJoined);
   },
   render: function (data) {
     if (!data) return console.error('View ' + this.name + ': render data is invalid.');
@@ -709,10 +1043,22 @@ module.exports = RestMVC.View.extend({
     return this;
   },
   showGroupMembersBtnEvent: function (e) {
+    var $noticeDotEl = this.$el.find('.notice-dot');
+    if ($noticeDotEl.hasClass('active')) {
+      $noticeDotEl.removeClass('active');
+    }
+
     pollexmomChatApp.navigate("group-members", {trigger: true})
+  },
+  onMemberJoined: function (user) {
+    var $noticeDotEl = this.$el.find('.notice-dot');
+    if (!$noticeDotEl.hasClass('active')) {
+      $noticeDotEl.addClass('active');
+    }
+    $noticeDotEl.attr('data-last-joined', user.userId);
   }
 });
-},{"../templates/index-page.tpl":15,"./index-page-chat-bar":17,"./index-page-content":19,"jquery":23,"rest-mvc":24,"underscore":41}],21:[function(require,module,exports){
+},{"../templates/index-page.tpl":18,"./index-page-chat-bar":24,"./index-page-content":26,"rest-mvc":31,"underscore":48}],28:[function(require,module,exports){
 (function (process){
 /*!
  * async
@@ -1839,7 +2185,7 @@ module.exports = RestMVC.View.extend({
 }());
 
 }).call(this,require('_process'))
-},{"_process":22}],22:[function(require,module,exports){
+},{"_process":29}],29:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1931,7 +2277,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],23:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -11143,14 +11489,14 @@ return jQuery;
 
 }));
 
-},{}],24:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
  * @Date: 2015/5/23
  */
 module.exports = require('./libs/index');
-},{"./libs/index":27}],25:[function(require,module,exports){
+},{"./libs/index":34}],32:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11190,7 +11536,7 @@ _.extend(Collection,
 );
 
 module.exports = Backbone.Collection.extend(Collection);
-},{"./index":27,"./plugins/backbone-crud":29,"./plugins/rest-querystring":32,"./plugins/rest-url":33,"backbone":37,"underscore":39}],26:[function(require,module,exports){
+},{"./index":34,"./plugins/backbone-crud":36,"./plugins/rest-querystring":39,"./plugins/rest-url":40,"backbone":44,"underscore":46}],33:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11204,7 +11550,7 @@ _.extend(Controller, {
 });
 
 module.exports = Controller;
-},{"underscore":39}],27:[function(require,module,exports){
+},{"underscore":46}],34:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11256,7 +11602,7 @@ RestMVC.plugin = function (name) {
 }
 
 module.exports = RestMVC;
-},{"../settings.json":40,"./collection":25,"./controller":26,"./model":28,"./plugins/backbone-crud":29,"./plugins/ionic":30,"./plugins/rest-querystring":32,"./plugins/rest-url":33,"./plugins/storage":34,"./router":35,"./view":36,"backbone":37,"jquery":38,"underscore":39}],28:[function(require,module,exports){
+},{"../settings.json":47,"./collection":32,"./controller":33,"./model":35,"./plugins/backbone-crud":36,"./plugins/ionic":37,"./plugins/rest-querystring":39,"./plugins/rest-url":40,"./plugins/storage":41,"./router":42,"./view":43,"backbone":44,"jquery":45,"underscore":46}],35:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11296,7 +11642,7 @@ _.extend(Model,
 );
 
 module.exports = Backbone.Model.extend(Model);
-},{"./index":27,"./plugins/backbone-crud":29,"./plugins/rest-querystring":32,"./plugins/rest-url":33,"backbone":37,"underscore":39}],29:[function(require,module,exports){
+},{"./index":34,"./plugins/backbone-crud":36,"./plugins/rest-querystring":39,"./plugins/rest-url":40,"backbone":44,"underscore":46}],36:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11347,7 +11693,7 @@ module.exports = {
     Backbone.Model.prototype.destroy.call(this, options);
   }
 };
-},{"backbone":37,"underscore":39}],30:[function(require,module,exports){
+},{"backbone":44,"underscore":46}],37:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11359,7 +11705,7 @@ module.exports = function (ionic, options) {
 
   ionic.Gesture(document, options.gesture);
 }
-},{}],31:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11515,7 +11861,7 @@ function animate($inEl, $outEl, options) {
 
   var requestId = ionic.requestAnimationFrame(cb);
 }
-},{"jquery":38,"underscore":39}],32:[function(require,module,exports){
+},{"jquery":45,"underscore":46}],39:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11699,7 +12045,7 @@ module.exports = {
     return this;
   }
 };
-},{"../index":27,"underscore":39}],33:[function(require,module,exports){
+},{"../index":34,"underscore":46}],40:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11756,7 +12102,7 @@ module.exports = {
     }
   }*/
 };
-},{"../index":27,"underscore":39}],34:[function(require,module,exports){
+},{"../index":34,"underscore":46}],41:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11808,7 +12154,7 @@ module.exports = {
   localStorage: _.extend({$scope: localStorage}, Storage),
   sessionStorage: _.extend({$scope: sessionStorage}, Storage),
 };
-},{"underscore":39}],35:[function(require,module,exports){
+},{"underscore":46}],42:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11892,7 +12238,7 @@ _.extend(Router, PageManagement, {
 });
 
 module.exports = Backbone.Router.extend(Router);
-},{"./index":27,"./plugins/page-management":31,"backbone":37,"underscore":39}],36:[function(require,module,exports){
+},{"./index":34,"./plugins/page-management":38,"backbone":44,"underscore":46}],43:[function(require,module,exports){
 /**
  * @Description:
  * @Author: fuwensong
@@ -11983,7 +12329,7 @@ _.extend(View, {
 });
 
 module.exports = Backbone.View.extend(View);
-},{"./index":27,"backbone":37,"underscore":39}],37:[function(require,module,exports){
+},{"./index":34,"backbone":44,"underscore":46}],44:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.2.0
 
@@ -13855,9 +14201,9 @@ module.exports = Backbone.View.extend(View);
 }));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":38,"underscore":39}],38:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],39:[function(require,module,exports){
+},{"jquery":45,"underscore":46}],45:[function(require,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"dup":30}],46:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -15407,11 +15753,11 @@ arguments[4][23][0].apply(exports,arguments)
   }
 }.call(this));
 
-},{}],40:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports={
   "apiRoot": "/api/",
   "env": "debug"
 }
-},{}],41:[function(require,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"dup":39}]},{},[1]);
+},{}],48:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}]},{},[1]);

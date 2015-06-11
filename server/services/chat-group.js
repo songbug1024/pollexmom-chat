@@ -114,7 +114,7 @@ Service.joinGroup = function (userId, callback) {
       group.updateAttribute('memberNum', group.memberNum + 1, callback);
     }]
   }, function (err, results) {
-    callback(err, results.updateMemberNum, results.updateUserGroup);
+    callback(err, results.updateUserGroup);
   });
 }
 

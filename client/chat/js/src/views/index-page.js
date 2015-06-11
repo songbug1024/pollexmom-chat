@@ -6,7 +6,6 @@
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var template = require('../templates/index-page.tpl');
-var $ = require('jquery');
 var ChatBarView = require('./index-page-chat-bar');
 var ContentView = require('./index-page-content');
 
@@ -27,6 +26,7 @@ module.exports = RestMVC.View.extend({
   },
   initialize: function () {
     // TODO
+    this.on('memberJoined', this.onMemberJoined);
   },
   render: function (data) {
     if (!data) return console.error('View ' + this.name + ': render data is invalid.');
@@ -45,6 +45,18 @@ module.exports = RestMVC.View.extend({
     return this;
   },
   showGroupMembersBtnEvent: function (e) {
+    var $noticeDotEl = this.$el.find('.notice-dot');
+    if ($noticeDotEl.hasClass('active')) {
+      $noticeDotEl.removeClass('active');
+    }
+
     pollexmomChatApp.navigate("group-members", {trigger: true})
+  },
+  onMemberJoined: function (user) {
+    var $noticeDotEl = this.$el.find('.notice-dot');
+    if (!$noticeDotEl.hasClass('active')) {
+      $noticeDotEl.addClass('active');
+    }
+    $noticeDotEl.attr('data-last-joined', user.userId);
   }
 });

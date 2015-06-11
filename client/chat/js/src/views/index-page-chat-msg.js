@@ -24,6 +24,7 @@ module.exports = RestMVC.View.extend({
     var senderUserId = this.model.get('senderUserId');
     var isMine = userId === senderUserId && userMemberId === senderId;
 
+    this.model.set('isMine', isMine);
     if (isMine) {
       this.$el.addClass('mine');
     }

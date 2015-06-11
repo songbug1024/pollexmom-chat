@@ -2,10 +2,15 @@
   "weChatMainUrl": "http://192.168.0.108:3000/",
   "apiRoot": "http://192.168.0.108:3000/api/",
   "socketIORoot": "http://192.168.0.108:3000/",
+  "socketIOOptions": {
+    "reconnectionAttempts": 5
+  },
   "ioVerifyTimeout": 200,
+  "enterChatRoomTimeout": 1500,
   "env": "debug",
   "locals": {
-    "weChatUserData": "pollexmom_chat_weChatUserData"
+    "weChatUserData": "pollexmom_chat_weChatUserData",
+    "userGroupInfo": "pollexmom_userGroupInfo"
   },
   "roles": {
     "member": "member",

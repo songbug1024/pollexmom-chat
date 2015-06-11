@@ -30,19 +30,5 @@ boot(app, __dirname, function(err) {
 function startSocketServer(server) {
   var io = socketIO(server);
 
-  io.on('connection', function (socket) {
-    socketServer.connect.apply(socket, arguments);
-
-    socket.on('join', function () {
-      socketServer.join.apply(socket, arguments);
-    });
-
-    socket.on('public msg', function () {
-      socketServer.publicMsg.apply(socket, arguments);
-    });
-
-    socket.on('disconnect', function () {
-      socketServer.disconnect.apply(socket, arguments);
-    });
-  });
+  io.on('connection', socketServer.connect);
 }
