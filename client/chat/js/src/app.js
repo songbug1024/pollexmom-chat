@@ -5,13 +5,16 @@
  */
 var RestMVC = require('rest-mvc');
 var IndexController = require('./controllers/index');
+var GroupMembersController = require('./controllers/group-members');
 
 module.exports = RestMVC.Router.extend({
-  actions: {
-    'sendMsg': IndexController.sendMsg
+  main: 'index',
+  controllers: {
+    index: IndexController,
+    groupMembers: GroupMembersController
   },
-  initialize: function () {
-    this.route('index', 'index', IndexController.index);
-    this.route('group-members', 'groupMembers', IndexController.groupMembers);
+  routes: {
+    'index': 'index.index',
+    'group-members': 'groupMembers.index'
   }
 });

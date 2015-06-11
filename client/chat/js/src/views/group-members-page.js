@@ -5,14 +5,13 @@
  */
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
-var template = require('../templates/index-page.tpl');
+var template = require('../templates/group-members-page.tpl');
 var $ = require('jquery');
-var ChatBarView = require('./index-page-chat-bar');
 var ContentView = require('./index-page-content');
 
 module.exports = RestMVC.View.extend({
-  id: 'index-page',
-  name: 'IndexPage',
+  id: 'group-members-page',
+  name: 'GroupMembersPage',
   role: 'page',
   template: _.template(template),
   className: 'page view',
@@ -23,10 +22,7 @@ module.exports = RestMVC.View.extend({
     groupName: '聊天室'
   },
   events: {
-    'tap .show-group-members': 'showGroupMembersBtnEvent'
-  },
-  initialize: function () {
-    // TODO
+    'swipe .msg-content': 'showGroupMembersBtnEvent'
   },
   render: function (data) {
     if (!data) return console.error('View ' + this.name + ': render data is invalid.');
@@ -45,6 +41,6 @@ module.exports = RestMVC.View.extend({
     return this;
   },
   showGroupMembersBtnEvent: function (e) {
-    pollexmomChatApp.navigate("group-members", {trigger: true})
+    pollexmomChatApp.back();
   }
 });

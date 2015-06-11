@@ -62,6 +62,8 @@ module.exports = {
       user.memberInfo = results[2].attributes;
       indexPageView.render(results);
     })
+
+    return indexPageView;
   },
   sendMsg: function (msg, callback) {
     if (!msg || !_.isObject(msg)) return console.error('sendMessage msg is invalid.');
@@ -74,8 +76,5 @@ module.exports = {
     }
 
     socket.emit('public msg', msg, callback);
-  },
-  groupMembers: function () {
-
   }
 };

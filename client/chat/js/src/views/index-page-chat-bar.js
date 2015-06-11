@@ -46,7 +46,7 @@ module.exports = RestMVC.View.extend({
     };
 
     this.trigger('sendingMsg', tempId, msg);
-    app.action('sendMsg', msg, function (err, msg) {
+    app.action('index.sendMsg', msg, function (err, msg) {
       if (err) {
         return self.trigger('sendMsgError', tempId, err);
       }

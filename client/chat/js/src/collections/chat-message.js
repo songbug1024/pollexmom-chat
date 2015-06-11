@@ -10,6 +10,7 @@ module.exports = RestMVC.Collection.extend({
   name: 'ChatMessage',
   plural: 'chat-messages',
   model: Model,
+  comparator: 'id',
   groupPublicRecordUrl: function (sinceId) {
     var groupId = this.groupId;
     if (!groupId) {
@@ -22,7 +23,7 @@ module.exports = RestMVC.Collection.extend({
     }
 
     var queryString = this.qLimit(RestMVC.Settings.pageSize)
-      .qOrder({id: 'ASC'})
+      .qOrder({id: 'DESC'})
       .qEnd();
 
     return this.urlRoot() + '?' + queryString;

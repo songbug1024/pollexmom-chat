@@ -16,6 +16,9 @@ RestMVC.config({
   settings: Settings
 });
 
+// Register ionic plugins
+//RestMVC.plugin('ionic')(ionic);
+
 var sessionStorage = RestMVC.plugin('storage').sessionStorage;
 var initWeChatUserPlugin = require('./plugins/init-wechat-user');
 var socketPlugin = require('./plugins/socket');
@@ -91,6 +94,6 @@ function socketClientReady(socket, user) {
     root: "/chat/"
   });
 
-  var route = window.initRoute || 'index';
+  var route = window.initRoute || app.main;
   app.navigate(route, {trigger: true, replace: true});
 }
