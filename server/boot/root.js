@@ -33,7 +33,7 @@ module.exports = function(server) {
   });
 
   router.get('/chat/:route', function(req, res) {
-    var route = req.param('route', '');
+    var route = req.params[route];
     res.render('chat/index', {initRoute: route});
   });
 

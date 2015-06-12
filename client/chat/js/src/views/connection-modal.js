@@ -18,20 +18,11 @@ module.exports = RestMVC.View.extend({
   frameData: {
     connectionText: '连接中...'
   },
-  initialize: function () {
-    this.shown = false;
-  },
   show: function (text) {
-    if (!this.shown) {
-      this.shown = true;
-      this.$el.show();
-    }
+    this.$el.addClass('shown');
     text && this.renderPart('connectionText', text);
   },
   hide: function () {
-    if (this.shown) {
-      this.shown = false;
-      this.$el.hide();
-    }
+    this.$el.removeClass('shown');
   }
 });

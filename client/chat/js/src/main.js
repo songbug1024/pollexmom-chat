@@ -3,6 +3,24 @@
  * @Author: fuwensong
  * @Date: 2015/5/4
  */
+var $ = require('jquery');
+(function ($) {
+  var weChatDataValue = getValueById('wechat-data');
+  var routeValue = getValueById('route-data');
+
+  window.userWeChatData = weChatDataValue ? JSON.parse(weChatDataValue) : null;
+  window.initRoute = routeValue || '';
+
+  function getValueById(id) {
+    var $el = $('#' + id);
+    var value = $el.attr('data-value');
+    $el.remove();
+
+    console.log('Fn getValueById: id is ' + id + ', value is ' + value);
+    return value;
+  }
+})($);
+
 var _ = require('underscore');
 _.templateSettings = {
   evaluate    : /{{([\s\S]+?)}}/g,

@@ -32,6 +32,10 @@ module.exports = RestMVC.View.extend({
   render: function () {
     this.$el.attr('data-id', this._id);
 
+    this.model.set('content', this.replaceFaces(this.model.get('content')));
     return this.frame(this.model.attributes);
+  },
+  replaceFaces: function (content) {
+    return content.replace(/\[em_([0-9]*)\]/g,'<img class="face" src="' + RestMVC.Settings.faceIconsRoot + '/$1.gif" />')
   }
 });

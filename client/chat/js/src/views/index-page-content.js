@@ -46,14 +46,24 @@ module.exports = RestMVC.View.extend({
   appendMsg: function (tempId, msg) {
     var $scrollEl = this.$el.find('.messages');
     var model = new ChatMsgModel(msg);
+    var msgView = new ChatMsgView({model: model, _id: tempId}).render();
 
-    $scrollEl.append(new ChatMsgView({model: model, _id: tempId}).render().el);
+    msgView.$el.append('<i class="send-status icon ion-ios-refresh-empty"></i>');
+    msgView.$el.addClass('processing');
+    $scrollEl.append(msgView.el);
   },
   markMsgError: function (tempId, err) {
-    // TODO ion-ios-refresh-empty red
+    var $msgEl = this.$el.find('.message.mine[data-id=' + tempId + ']');
+    var $statusEl = $msgEl.find('.send-status');
+
+    $msgEl.removeClass('processing');
+    $statusEl.addClass('assertive');
   },
   markMsgSuccess: function (tempId, msg) {
-    var $msgEl = this.$el.find('li.message.mine[data-id=' + tempId + ']');
+    var $msgEl = this.$el.find('.message.mine[data-id=' + tempId + ']');
+    var $statusEl = $msgEl.find('.send-status');
+
     $msgEl.attr('data-id', msg.id);
+    $statusEl.remove();
   }
 });

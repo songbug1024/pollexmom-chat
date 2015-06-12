@@ -38,6 +38,7 @@ module.exports = RestMVC.View.extend({
     var chatBarView = new ChatBarView();
     var contentView = new ContentView({chatBarView: chatBarView});
 
+    chatBarView.contentView = contentView;
     chatBarView.setElement(this.$el.find('.chat-input-bar'));
     contentView.setElement(this.$el.find('.msg-content'));
     chatBarView.render();
