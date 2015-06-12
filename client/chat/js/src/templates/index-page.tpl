@@ -10,10 +10,12 @@
   </div>
 </div>
 <div class="chat-input-bar bar bar-footer bar-stable">
-  <button class="add-phiz button button-clear button-dark ion-happy-outline"></button>
+  <button class="add-face button button-clear button-dark ion-happy-outline"></button>
   <button class="add-more button button-clear button-dark ion-ios-plus-outline"></button>
   <label class="msg-input-label item item-input">
-    <input class="msg-input" type="text" placeholder="说两句...">
+    <input class="msg-input" type='text' placeholder="说两句...">
   </label>
   <button class="send-msg-btn button button-positive pull-right">发送</button>
+  <div class="footer-more">
+  </div>
 </div>
