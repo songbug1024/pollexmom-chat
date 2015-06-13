@@ -15,11 +15,12 @@ module.exports = RestMVC.View.extend({
   className: 'item item-avatar item-icon-right',
   events: {
   },
-  initialize: function (options) {
+  initialize: function () {
     var isMaster = this.model.get('isMaster');
     if (isMaster) {
       this.$el.addClass('master');
     }
+    this.model.set('isMe', this.model.get('userId') === pollexmomChatApp.user.id);
   },
   render: function () {
     return this.frame(this.model.attributes);

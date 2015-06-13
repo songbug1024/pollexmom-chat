@@ -1,14 +1,15 @@
 {
-  "weChatMainUrl": "http://127.0.0.1:3000/",
-  "apiRoot": "http://127.0.0.1:3000/api/",
-  "socketIORoot": "http://127.0.0.1:3000/",
+  "weChatMainUrl": "http://192.168.0.108:3002/",
+  "apiRoot": "http://192.168.0.108:3002/api/",
+  "socketIORoot": "192.168.0.108:3002/",
   "socketIOOptions": {
     "reconnectionAttempts": 5
   },
+  "env": "debug",
   "ioVerifyTimeout": 200,
   "enterChatRoomTimeout": 1500,
   "faceIconsRoot": "/images/face",
-  "env": "debug",
+  "zClipBoardPath": "/js/libs/jquery-zclip/1.1.1/ZeroClipboard.swf",
   "locals": {
     "weChatUserData": "pollexmom_chat_weChatUserData",
     "userGroupInfo": "pollexmom_userGroupInfo"
@@ -29,5 +30,8 @@
   "messageTypes": {
     "public": "public",
     "private": "private"
+  },
+  "chat": {
+    "msgRevokeLimit": 120000
   }
 }

@@ -11,6 +11,12 @@ module.exports = RestMVC.Collection.extend({
   plural: 'chat-messages',
   model: Model,
   comparator: 'id',
+  idDesc: function (a, b) {
+    return a.id > b.id ? 1 : -1
+  },
+  idAsc: function (a, b) {
+    return a.id < b.id ? 1 : -1
+  },
   groupPublicRecordUrl: function (sinceId) {
     var groupId = this.groupId;
     if (!groupId) {

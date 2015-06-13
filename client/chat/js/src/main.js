@@ -3,7 +3,8 @@
  * @Author: fuwensong
  * @Date: 2015/5/4
  */
-var $ = require('jquery');
+var $ = window.$ = window.jQuery = require('jquery');
+
 (function ($) {
   var weChatDataValue = getValueById('wechat-data');
   var routeValue = getValueById('route-data');

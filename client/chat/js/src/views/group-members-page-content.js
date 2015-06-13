@@ -35,8 +35,6 @@ module.exports = RestMVC.View.extend({
     var scrollView = new ionic.views.Scroll({
       el: this.el
     });
-    var max = scrollView.getScrollMax();
-    scrollView.scrollTo(max.left, max.top, false);
     return this;
   }
 });

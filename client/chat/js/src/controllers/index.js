@@ -24,7 +24,6 @@ module.exports = {
     var charGroupModel = new ChatGroupModel({id: groupId});
     var chatGroupMemberModel = new ChatGroupMemberModel({groupId: groupId, userId: userId});
 
-    chatMessageCollection.groupId = groupId;
     async.parallel([
       function loadGroupData(callback) {
         charGroupModel.url = charGroupModel.idUrl();
@@ -36,6 +35,8 @@ module.exports = {
         });
       },
       function loadMessages(callback) {
+        chatMessageCollection.groupId = groupId;
+        chatMessageCollection.comparator = chatMessageCollection.idDesc;
         chatMessageCollection.url = chatMessageCollection.groupPublicRecordUrl();
         chatMessageCollection.fetch(function (err) {
           if (err) {
@@ -66,6 +67,9 @@ module.exports = {
     this.socket.on('member joined', function (user) {
       indexPageView.trigger('memberJoined', user);
     });
+    this.socket.on('msg revoked', function (msgId) {
+      indexPageView.trigger('msgRevoked', msgId);
+    });
     return indexPageView;
   },
   sendMsg: function (msg, callback) {
@@ -79,5 +83,26 @@ module.exports = {
     }
 
     socket.emit('public msg', msg, callback);
+  },
+  revokeMsg: function (id, callback) {
+    if (!id) return console.error('revokeMsg msg id is invalid.');
+
+    this.socket.emit('revoke msg', {
+      msgId: id,
+      userId: this.user.id
+    }, callback);
+  },
+  loadMoreMsgs: function (sinceId, callback) {
+    var chatMessageCollection = new ChatMessageCollection();
+
+    chatMessageCollection.comparator = chatMessageCollection.idAsc;
+    chatMessageCollection.groupId = this.user.groupId;
+    chatMessageCollection.url = chatMessageCollection.groupPublicRecordUrl(sinceId);
+    chatMessageCollection.fetch(function (err) {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, this);
+    });
   }
 };

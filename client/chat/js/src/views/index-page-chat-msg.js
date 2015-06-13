@@ -4,6 +4,7 @@
  * @Date: 2015/6/6
  */
 var RestMVC = require('rest-mvc');
+var Util = RestMVC.plugin('util');
 var _ = require('underscore');
 var template = require('../templates/chat-msg.tpl');
 
@@ -31,11 +32,14 @@ module.exports = RestMVC.View.extend({
   },
   render: function () {
     this.$el.attr('data-id', this._id);
+    this.$el.attr('data-content', this.model.get('content'));
+    this.$el.attr('data-content-type', this.model.get('contentType'));
+    this.$el.attr('data-created', Util.dateStr2Times(this.model.get('created')));
 
-    this.model.set('content', this.replaceFaces(this.model.get('content')));
+    this.model.set('content', this.replaceFace2Img(this.model.get('content')));
     return this.frame(this.model.attributes);
   },
-  replaceFaces: function (content) {
+  replaceFace2Img: function (content) {
     return content.replace(/\[em_([0-9]*)\]/g,'<img class="face" src="' + RestMVC.Settings.faceIconsRoot + '/$1.gif" />')
   }
 });

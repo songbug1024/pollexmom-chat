@@ -16,7 +16,8 @@ module.exports = RestMVC.View.extend({
   events: {
     'tap .send-msg-btn': 'sendMsgBtnEvent',
     'tap .add-face': 'addFaceBtnEvent',
-    'blur .msg-input': 'msgInputBlurEvent'
+    'blur .msg-input': 'msgInputBlurEvent',
+    'focus .msg-input': 'msgInputFocusEvent'
   },
   initialize: function () {
   },
@@ -33,6 +34,7 @@ module.exports = RestMVC.View.extend({
       return console.warn('sendMsgBtnEvent: msg is empty.');
     }
     $msgInputEl.val('');
+    this.hideFooterMore();
 
     var app = pollexmomChatApp;
     var user = app.user;
@@ -60,8 +62,8 @@ module.exports = RestMVC.View.extend({
   addFaceBtnEvent: function (e) {
     var $el = this.$el;
     var $footerMoreEl = $el.find('.footer-more');
-
-    if ($el.hasClass('expanded')) {
+    var expanded = $el.hasClass('expanded');
+    if (expanded) {
       // do hide
       this.hideFooterMore();
     } else {
@@ -73,9 +75,15 @@ module.exports = RestMVC.View.extend({
       }
       this.qqFaceView.show(this.faceItemHandler());
     }
+    this.trigger('addFaceBtnEvent', expanded);
   },
   msgInputBlurEvent: function () {
-    // TODO
+    var self = this;
+    setTimeout(function () {self.trigger('msgInputBlur');}, 500);
+  },
+  msgInputFocusEvent: function (e) {
+    var self = this;
+    setTimeout(function () {self.trigger('msgInputFocus');}, 500);
   },
   faceItemHandler: function () {
     var self = this;
@@ -84,25 +92,21 @@ module.exports = RestMVC.View.extend({
       var val = $msgInputEl.val();
       $msgInputEl.val(val + text);
 
-      self.qqFaceView.hide();
-      self.hideFooterMore();
+//      self.qqFaceView.hide();
+//      self.hideFooterMore();
     }
   },
   hideFooterMore: function () {
     var $el = this.$el;
-    var $contentViewEl = this.contentView.$el;
     var $footerMoreEl = $el.find('.footer-more');
-    var $msgInputEl = $el.find('.msg-input');
 
     $el.removeClass('expanded');
-    $contentViewEl.removeClass('footer-expanded');
     $footerMoreEl.children('.active').removeClass('active');
+    this.trigger('footerExpand', false);
   },
   showFooterMore: function () {
     var $el = this.$el;
-    var $contentViewEl = this.contentView.$el;
-
     $el.addClass('expanded');
-    $contentViewEl.addClass('footer-expanded');
+    this.trigger('footerExpand', true);
   }
 });

@@ -14,6 +14,7 @@ Socket.connect = function (socket) {
   socket.on('join', Socket.join(socket));
 
   socket.on('public msg', Socket.publicMsg(socket));
+  socket.on('revoke msg', Socket.revokeMsg(socket));
 
   socket.on('disconnect', Socket.disconnect(socket));
 
@@ -89,6 +90,28 @@ Socket.publicMsg = function (socket) {
       // broadcast others
       var groupRoom = 'group' + msg.groupId;
       socket.broadcast.to(groupRoom).emit('public msg', msg);
+    });
+  }
+}
+
+Socket.revokeMsg = function (socket) {
+  return function (data, callback) {
+    console.log('Socket send revokeMsg request, msg id is ' + data.msgId);
+
+    ChatMessageService.revokeMessage(data, function (err, msg) {
+      if (err) {
+        return callback(err);
+      }
+      callback(null);
+
+      var messageType = msg.messageType;
+      if (messageType === 'public') {
+        // broadcast others
+        var groupRoom = 'group' + msg.groupId;
+        socket.broadcast.to(groupRoom).emit('msg revoked', msg.id);
+      } else if (messageType === 'private') {
+        // TODO
+      }
     });
   }
 }

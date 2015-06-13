@@ -10,6 +10,7 @@ var localStorage = RestMVC.plugin('storage').localStorage;
 
 var GroupMembersPageView = require('../views/group-members-page');
 var GroupMemberCollection = require('../collections/chat-group-member');
+var ForwardMembersView = require('../views/forward-members');
 
 module.exports = {
   index: function () {
@@ -53,5 +54,41 @@ module.exports = {
       groupMembersPageView.render({masters: results[0], members: results[1]});
     })
     return groupMembersPageView;
+  },
+  forwardMembers: function (msg, callback) {
+    var groupId = this.user.groupId;
+    var forwardMembersView = new ForwardMembersView({msg: msg});
+
+    async.parallel([
+      function loadMasters(callback) {
+        var masterCollection = new GroupMemberCollection();
+        masterCollection.groupId = groupId;
+        masterCollection.url = masterCollection.mastersUrl();
+
+        masterCollection.fetch(function (err) {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, this);
+        });
+      },
+      function loadMembers(callback) {
+        var memberCollection = new GroupMemberCollection();
+        memberCollection.groupId = groupId;
+        memberCollection.url = memberCollection.membersUrl();
+
+        memberCollection.fetch(function (err) {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, this);
+        });
+      }
+    ], function (err, results) {
+      if (err) {
+        return groupMembersPageView.error(err);
+      }
+      groupMembersPageView.render({masters: results[0], members: results[1]});
+    })
   }
 };
