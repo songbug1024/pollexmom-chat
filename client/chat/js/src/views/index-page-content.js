@@ -13,12 +13,29 @@ var ChatMsgModel = require('../models/chat-message');
 module.exports = RestMVC.View.extend({
   name: 'IndexPageContent',
   role: 'content',
-  initialize: function () {
+  initialize: function (options) {
     var self = this;
 
-    pollexmomChatApp.socket.on('public msg', function (msg) {
-      self.appendMsg(msg.id, msg);
-    });
+    options = options || {};
+    this.chatType = options.chatType || RestMVC.Settings.messageTypes.public;
+    this.chatTo = options.chatTo || null;
+
+    if (this.chatType === RestMVC.Settings.messageTypes.public) {
+
+      pollexmomChatApp.socket.on('public msg', function (msg) {
+        self.appendMsg(msg.id, msg);
+      });
+
+    } else if (this.chatType === RestMVC.Settings.messageTypes.private
+      && this.chatTo && this.chatTo.id && this.chatTo.userId) {
+
+      pollexmomChatApp.socket.on('private msg', function (msg) {
+        if (self.chatTo.id === msg.receiverId && self.chatTo.userId === msg.receiverUserId) {
+          self.appendMsg(msg.id, msg);
+        }
+      });
+
+    }
     this.on('loadMoreMsgsSuccess', this.loadMoreMsgsSuccess);
   },
   render: function (data) {
@@ -34,10 +51,16 @@ module.exports = RestMVC.View.extend({
             return;
           }
           self.loadingMore = true;
-          var sinceId = self.$el.find('.messages .message:first').attr('data-id');
-
           self.acceptData = true;
-          pollexmomChatApp.action('index.loadMoreMsgs', sinceId, function (err, msgs) {
+          var sinceId = self.$el.find('.messages .message:first').attr('data-id');
+          var data = {sinceId: sinceId};
+
+          if (self.chatType === RestMVC.Settings.messageTypes.private
+            && self.chatTo && self.chatTo.id && self.chatTo.userId) {
+            data.toId = self.chatTo.id;
+            data.toUserId = self.chatTo.userId;
+          }
+          pollexmomChatApp.action('index.loadMoreMsgs', data, function (err, msgs) {
             if (!self.acceptData) return console.warn('User canceled');
             if (err) {
               Common.notice('刷新失败');

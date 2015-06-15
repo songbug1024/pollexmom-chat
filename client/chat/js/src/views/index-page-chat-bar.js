@@ -6,7 +6,6 @@
 var RestMVC = require('rest-mvc');
 var _ = require('underscore');
 var $ = require('jquery');
-var IndexController = require('../controllers/index');
 var QQFaceView = require('./qqface');
 
 module.exports = RestMVC.View.extend({
@@ -19,7 +18,11 @@ module.exports = RestMVC.View.extend({
     'blur .msg-input': 'msgInputBlurEvent',
     'focus .msg-input': 'msgInputFocusEvent'
   },
-  initialize: function () {
+  initialize: function (options) {
+    options = options || {};
+
+    this.chatType = options.chatType || RestMVC.Settings.messageTypes.public;
+    this.chatTo = options.chatTo || null;
   },
   render: function (data) {
     // TODO
@@ -48,10 +51,16 @@ module.exports = RestMVC.View.extend({
       senderUserId: user.id,
       content: _.escape(msgValue),
       contentType: RestMVC.Settings.contentTypes.text,
-      messageType: RestMVC.Settings.messageTypes.public
+      messageType: this.chatType
     };
 
-    this.trigger('sendingMsg', tempId, msg);//ion-ios-refresh-empty
+    if (this.chatType === RestMVC.Settings.messageTypes.private
+      && this.chatTo && this.chatTo.id && this.chatTo.userId) {
+      msg.receiverId = this.chatTo.id;
+      msg.receiverUserId = this.chatTo.userId;
+    }
+
+    this.trigger('sendingMsg', tempId, msg);
     app.action('index.sendMsg', msg, function (err, msg) {
       if (err) {
         return self.trigger('sendMsgError', tempId, err);
