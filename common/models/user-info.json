@@ -44,6 +44,12 @@
         "columnName": "USER_INFO_BLOOD_TYPE"
       }
     },
+    "region": {
+      "type": "string",
+      "oracle": {
+        "columnName": "USER_INFO_REGION"
+      }
+    },
     "created": {
       "type": "date",
       "defaultFn": "now",

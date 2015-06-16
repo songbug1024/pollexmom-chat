@@ -23,7 +23,43 @@ module.exports = RestMVC.Collection.extend({
       return console.error('Collection \'' + this.name + '\' groupPublicRecordUrl groupId is invalid.');
     }
 
-    this.qWhere({status: 1, groupId: groupId});
+    this.qWhere({status: 1, groupId: groupId, messageType: RestMVC.Settings.messageTypes.public});
+    if (sinceId) {
+      this.qWhere({id: {lt: sinceId}});
+    }
+
+    var queryString = this.qLimit(RestMVC.Settings.pageSize)
+      .qOrder({id: 'DESC'})
+      .qEnd();
+
+    return this.urlRoot() + '?' + queryString;
+  },
+  groupPrivateRecordUrl: function (sinceId, senderId, receiverId) {
+    var groupId = this.groupId;
+    if (!groupId) {
+      return console.error('Collection \'' + this.name + '\' groupPrivateRecordUrl groupId is invalid.');
+    }
+
+    if (!senderId || !receiverId) {
+      return console.error('Collection \'' + this.name + '\' groupPrivateRecordUrl senderId or receiverId is invalid.');
+    }
+
+    this.qWhere({
+      status: 1,
+      groupId: groupId,
+      messageType: RestMVC.Settings.messageTypes.private,
+      or: [
+        {
+          senderId: senderId,
+          receiverId: receiverId
+        },
+        {
+          senderId: receiverId,
+          receiverId: senderId
+        }
+      ]
+    });
+
     if (sinceId) {
       this.qWhere({id: {lt: sinceId}});
     }

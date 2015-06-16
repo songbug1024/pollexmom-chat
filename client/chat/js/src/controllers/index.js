@@ -72,6 +72,9 @@ module.exports = {
     });
     return indexPageView;
   },
+  private: function (id) {
+
+  },
   sendMsg: function (msg, callback) {
     if (!msg || !_.isObject(msg)) return console.error('sendMessage msg is invalid.');
 
@@ -82,7 +85,11 @@ module.exports = {
       return callback(messageModel.validationError);
     }
 
-    socket.emit('public msg', msg, callback);
+    if (msg.messageType === RestMVC.Settings.messageTypes.public) {
+      socket.emit('public msg', msg, callback);
+    } else if (msg.messageType === RestMVC.Settings.messageTypes.private) {
+      socket.emit('private msg', msg, callback);
+    }
   },
   revokeMsg: function (id, callback) {
     if (!id) return console.error('revokeMsg msg id is invalid.');
@@ -92,12 +99,25 @@ module.exports = {
       userId: this.user.id
     }, callback);
   },
-  loadMoreMsgs: function (sinceId, callback) {
+  loadMoreMsgs: function (data, callback) {
+    if (!data || !_.isObject(data)) return console.error('loadMoreMsgs data is invalid.');
+
+    var sinceId = data.sinceId;
+    var toId = data.toId;
+    var toUserId = data.toUserId;
+    var fromId = this.user.memberInfo.id;
+    var fromUserId = this.user.id;
     var chatMessageCollection = new ChatMessageCollection();
 
     chatMessageCollection.comparator = chatMessageCollection.idAsc;
     chatMessageCollection.groupId = this.user.groupId;
-    chatMessageCollection.url = chatMessageCollection.groupPublicRecordUrl(sinceId);
+
+    if (toId && toUserId) {
+      chatMessageCollection.url = chatMessageCollection.groupPrivateRecordUrl(sinceId, fromId, toId);
+    } else {
+      chatMessageCollection.url = chatMessageCollection.groupPublicRecordUrl(sinceId);
+    }
+
     chatMessageCollection.fetch(function (err) {
       if (err) {
         return callback(err);

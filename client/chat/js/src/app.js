@@ -15,6 +15,8 @@ module.exports = RestMVC.Router.extend({
   },
   routes: {
     'index': 'index.index',
+    'private': 'index.private',
+    'private/:id': 'index.private',
     'group-members': 'groupMembers.index'
   }
 });
