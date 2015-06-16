@@ -43,6 +43,7 @@ var initWeChatUserPlugin = require('./plugins/init-wechat-user');
 var socketPlugin = require('./plugins/socket');
 var App = require('./app');
 
+/*
 (function verifyIO() {
   if (!io) {
     console.warn('io-clint lib has not been loaded!');
@@ -57,8 +58,8 @@ var App = require('./app');
     initUserData();
   }
 })();
-
-function initUserData() {
+*/
+(function initUserData() {
   var sessionWeChatUserData = sessionStorage.getJSON(RestMVC.Settings.locals.weChatUserData, null);
   var weChatUserData = window.userWeChatData;
 
@@ -72,7 +73,7 @@ function initUserData() {
   } else {
     startClient(null, sessionWeChatUserData);
   }
-}
+})();
 
 function startClient(err, user) {
   if (err || !user || !user.id) {

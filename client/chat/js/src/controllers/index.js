@@ -72,6 +72,9 @@ module.exports = {
     });
     return indexPageView;
   },
+  private: function (id) {
+
+  },
   sendMsg: function (msg, callback) {
     if (!msg || !_.isObject(msg)) return console.error('sendMessage msg is invalid.');
 

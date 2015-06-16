@@ -3,16 +3,22 @@
  */
 var RestMVC = require('rest-mvc');
 var $ = require('jquery');
+var _ = require('underscore');
+var io = require('socket.io-client');
 var ConnectionModalView = require('../views/connection-modal');
 var isReconnect = false;
 
 module.exports = function (user, readyCallback) {
-  var socket = io(RestMVC.Settings.socketIORoot, RestMVC.Settings.socketIOOptions);
+  var opts = _.extend({
+    id: user.id
+  }, RestMVC.Settings.socketIOOptions);
+
+  var socket = io(RestMVC.Settings.socketIORoot, opts);
   var connectionModal = new ConnectionModalView();
 
   $('body').append(connectionModal.frame().el);
   connectionModal.show();
-  
+
   socket.on('connect', function () {
     if (!isReconnect) {
       connectionModal.show('已连接服务器，登录中...');
@@ -41,9 +47,14 @@ module.exports = function (user, readyCallback) {
     }
   });
 
-  socket.on('disconnect', function () {
+  socket.on('disconnect', function (reason) {
     if (RestMVC.Settings.env === 'debug') {
-      console.log('Socket on disconnect');
+      console.log('Socket on disconnect, reason is ' + reason);
+    }
+    if (reason === 'io server disconnect') {
+      connectionModal.show('帐号在其他地方登录！');
+    } else {
+      connectionModal.show('帐号被迫下线！');
     }
   });
 
@@ -70,7 +81,7 @@ module.exports = function (user, readyCallback) {
       console.log('Socket on reconnecting, attempt is ' + attempt);
     }
 
-    connectionModal.show('网络不给力，第' + attempt + '次重连中...');
+    connectionModal.show('与服务器断开，第' + attempt + '次重连中...');
   });
 
   socket.on('reconnect_error', function (err) {
