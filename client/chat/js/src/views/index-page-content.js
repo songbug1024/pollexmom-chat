@@ -42,7 +42,10 @@ module.exports = RestMVC.View.extend({
             if (err) {
               Common.notice('刷新失败');
               self.trigger('loadMoreMsgsError', err);
-              return setTimeout(function () {scrollView.finishPullToRefresh()}, 300);
+              return setTimeout(function () {
+                scrollView.finishPullToRefresh();
+                self.loadingMore = false;
+              }, 300);
             }
 
             var count = msgs.length;

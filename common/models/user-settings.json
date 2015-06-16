@@ -10,7 +10,10 @@
     }
   },
   "properties": {
-    "groupListSortBy": {
+    "groupListOrder": {
+      "type": "string"
+    },
+    "groupListOrderBy": {
       "type": "string"
     },
     "historyMsgStoringDays": {

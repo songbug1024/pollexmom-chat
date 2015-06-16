@@ -6,6 +6,7 @@
 var RestMVC = require('rest-mvc');
 var $ = require('jquery');
 var _ = require('underscore');
+var Common = require('../plugins/common');
 var template = require('../templates/group-members-page.tpl');
 var ContentView = require('./group-members-page-content');
 
@@ -16,7 +17,9 @@ module.exports = RestMVC.View.extend({
   template: _.template(template),
   className: 'page view',
   frameData: {
-    groupName: '聊天室'
+    groupName: '聊天室',
+    order: RestMVC.Settings.defaults.membersOrder,
+    orderBy: RestMVC.Settings.defaults.membersOrderBy
   },
   events: {
     'tap .sort-btn': 'sortBtnEvent',
@@ -29,9 +32,16 @@ module.exports = RestMVC.View.extend({
     var group = data.group;
     group && this.renderPart('groupName', group.name);
 
+    var $selectionEl = this.$el.find('.sort-selections .item[data-orderby="' + this.frameData.orderBy + '"]');
+    $selectionEl.addClass('current').attr('data-order', this.frameData.order);
+
     var contentView = new ContentView();
     contentView.setElement(this.$el.find('.member-content'));
-    contentView.render(data);
+    contentView.listenTo(this, 'resort', contentView.render);
+
+    this.listenTo(contentView, 'delegateResort', this.delegateResort);
+    this.listenTo(contentView, 'loadMoreMembersSuccess', this.loadMoreMembersSuccess);
+    this.trigger('resort', data);
     return this;
   },
   backEvent: function (e) {
@@ -48,14 +58,14 @@ module.exports = RestMVC.View.extend({
       $sectionsEl.removeClass('show');
     }
   },
-  sortItemEvent: function (e) {
-    var $el = $(e.currentTarget);
+  resortMembers: function ($el, callback) {
+    var self = this;
     var $sortBtnEl = this.$el.find('.sort-btn');
     var $sectionsEl = this.$el.find('.sort-selections');
 
     if ($el.hasClass('current')) {
       var order = $el.attr('data-order');
-      order = order === 'asc' ? 'desc' : 'asc';
+      order = order === 'ASC' ? 'DESC' : 'ASC';
       $el.attr('data-order', order);
     } else {
       var $currentItemEl = $sectionsEl.find('.item.current');
@@ -65,8 +75,31 @@ module.exports = RestMVC.View.extend({
     $sectionsEl.removeClass('show');
     $sortBtnEl.removeClass('active');
 
-    var orderby = $el.attr('data-orderby');
+    var orderBy = $el.attr('data-orderby');
     var order = $el.attr('data-order');
+
+    if (order && orderBy) {
+      pollexmomChatApp.action('groupMembers.resort', {
+        order: order,
+        orderBy: orderBy
+      }, function (err, data) {
+        if (err) {
+          callback && callback(err);
+          return Common.notice('刷新失败');
+        }
+        Common.notice('刷新成功');
+        self.trigger('resort', data);
+        callback && callback(null, data);
+      });
+    }
+  },
+  sortItemEvent: function (e) {
+    this.resortMembers($(e.currentTarget));
+  },
+  delegateResort: function (callback) {
+    this.resortMembers(this.$el.find('.item.current'), callback);
+  },
+  loadMoreMembersSuccess: function (members, sinceId) {
     // TODO
   }
 });

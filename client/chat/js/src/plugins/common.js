@@ -54,14 +54,14 @@ module.exports = {
     var refresherMethods = options.refresherMethods;
     if (options.usePullToRefresh && refresherMethods) {
       refresherMethods = _.extend({
-        activate: function () {console.log('activate' + arguments)},
-        deactivate: function () {console.log('deactivate' + arguments)},
-        start: function () {console.log('start' + arguments)},
-        show: function () {console.log('show' + arguments)},
-        hide: function () {console.log('hide' + arguments)},
-        tail: function () {console.log('tail' + arguments)}
+        activate: function () {},
+        deactivate: function () {},
+        start: function () {},
+        show: function () {},
+        hide: function () {},
+        tail: function () {}
       }, refresherMethods);
-      scrollView.activatePullToRefresh(48, refresherMethods);
+      scrollView.activatePullToRefresh(60, refresherMethods);
     }
 
     return scrollView;

@@ -36,7 +36,7 @@ module.exports = {
       },
       function loadMessages(callback) {
         chatMessageCollection.groupId = groupId;
-        chatMessageCollection.comparator = chatMessageCollection.idDesc;
+        chatMessageCollection.comparator = chatMessageCollection.idDESC;
         chatMessageCollection.url = chatMessageCollection.groupPublicRecordUrl();
         chatMessageCollection.fetch(function (err) {
           if (err) {

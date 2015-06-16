@@ -19,10 +19,15 @@ module.exports = RestMVC.View.extend({
     var isMaster = this.model.get('isMaster');
     if (isMaster) {
       this.$el.addClass('master');
+    } else {
+      this.$el.addClass('member');
     }
     this.model.set('isMe', this.model.get('userId') === pollexmomChatApp.user.id);
   },
   render: function () {
+    this.$el.attr('data-id', this.model.id);
+    this.$el.attr('data-display-name', this.model.get('displayName'));
+    this.$el.attr('data-created', this.model.get('created'));
     return this.frame(this.model.attributes);
   }
 });

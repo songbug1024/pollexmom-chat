@@ -12,7 +12,9 @@
   "zClipBoardPath": "/js/libs/jquery-zclip/1.1.1/ZeroClipboard.swf",
   "locals": {
     "weChatUserData": "pollexmom_chat_weChatUserData",
-    "userGroupInfo": "pollexmom_userGroupInfo"
+    "userGroupInfo": "pollexmom_userGroupInfo",
+    "groupMasters": "pollexmom_groupMasters",
+    "groupMembers": "pollexmom_groupMembers"
   },
   "roles": {
     "member": "member",
@@ -33,5 +35,9 @@
   },
   "chat": {
     "msgRevokeLimit": 120000
+  },
+  "defaults": {
+    "membersOrderBy": "displayName",
+    "membersOrder": "DESC"
   }
 }

@@ -223,6 +223,7 @@
   top: 44px;
   right: 0;
   display: none;
+  z-index: 10000;
 }
 .sort-selections.show {
   display: block;
@@ -233,10 +234,10 @@
 .sort-selections .item.current .icon {
   display: inline-block;
 }
-.sort-selections .item.current[data-order='desc'] .asc {
+.sort-selections .item.current[data-order='DESC'] .asc {
   display: none;
 }
-.sort-selections .item.current[data-order='asc'] .desc {
+.sort-selections .item.current[data-order='ASC'] .desc {
   display: none;
 }
 .msg-operations {
@@ -286,11 +287,11 @@
   position: absolute;
   top: 43px;
   width: 100%;
-  height: 28px;
+  height: 40px;
   font-size: 14px;
   color: #e6e5eb;
   background-color: rgba(0, 0, 0, .4);
   z-index: 10000;
   text-align: center;
-  line-height: 28px;
+  line-height: 40px;
 }
